@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import { handleError } from "../utils/responseUtils";
 
 export interface AuthenticatedRequest extends Request {
   user?: JwtPayload;
@@ -18,8 +19,8 @@ export function authenticateToken(
   if (token == null) return res.sendStatus(401);
 
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string, (err, user) => {
-    console.log(err);
-    if (err) return res.sendStatus(403);
+    
+    if (err) return res.status(403).json(handleError(err.message));
     req.user = user as JwtPayload;
     next();
   });
@@ -30,7 +31,7 @@ export type User = {
 };
 
 export function generateAccessToken(user: User) {
-  return jwt.sign({ name: user}, process.env.ACCESS_TOKEN_SECRET || "rr", {
-    expiresIn: "60s",
+  return jwt.sign({user}, process.env.ACCESS_TOKEN_SECRET || "rr", {
+    expiresIn: "120s",
   });
 }
